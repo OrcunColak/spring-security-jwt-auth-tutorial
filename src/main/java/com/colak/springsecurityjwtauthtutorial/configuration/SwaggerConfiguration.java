@@ -46,6 +46,7 @@ public class SwaggerConfiguration {
         return new SecurityScheme()
                 .type(SecurityScheme.Type.APIKEY)
                 .in(SecurityScheme.In.HEADER)
+                // parameter name
                 .name("cookie");
 
     }

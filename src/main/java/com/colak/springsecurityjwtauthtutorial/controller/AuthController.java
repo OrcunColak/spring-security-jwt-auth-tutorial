@@ -1,5 +1,6 @@
 package com.colak.springsecurityjwtauthtutorial.controller;
 
+import com.colak.springsecurityjwtauthtutorial.configuration.JwtAuthFilter;
 import com.colak.springsecurityjwtauthtutorial.dto.LoginAttemptResponseDto;
 import com.colak.springsecurityjwtauthtutorial.dto.LoginRequestDto;
 import com.colak.springsecurityjwtauthtutorial.dto.LoginResponseDto;
@@ -8,9 +9,17 @@ import com.colak.springsecurityjwtauthtutorial.entity.LoginAttempt;
 import com.colak.springsecurityjwtauthtutorial.helper.JwtHelper;
 import com.colak.springsecurityjwtauthtutorial.service.LoginService;
 import com.colak.springsecurityjwtauthtutorial.service.UserService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -42,17 +51,32 @@ public class AuthController {
 
     // http://localhost:8080/api/auth/login
     @PostMapping(value = "/login")
-    public ResponseEntity<LoginResponseDto> login(@Valid @RequestBody LoginRequestDto request) {
+    public ResponseEntity<LoginResponseDto> login(@Valid @RequestBody LoginRequestDto request,
+                                                  HttpServletResponse response) {
         try {
             authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(request.email(), request.password()));
-        } catch (BadCredentialsException e) {
-            loginService.addLoginAttempt(request.email(), false);
-            throw e;
-        }
 
-        String token = JwtHelper.generateToken(request.email());
-        loginService.addLoginAttempt(request.email(), true);
-        return ResponseEntity.ok(new LoginResponseDto(request.email(), token));
+            String accessToken = JwtHelper.generateToken(request.email());
+            loginService.addLoginAttempt(request.email(), true);
+
+            // set cookie expiry for 30 minutes
+            long cookieExpiry = 1800;
+
+            ResponseCookie cookie = ResponseCookie.from(JwtAuthFilter.COOKIE_NAME, accessToken)
+                    .httpOnly(true)
+                    .secure(false)
+                    .path("/")
+                    .maxAge(cookieExpiry)
+                    .build();
+            response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
+
+            LoginResponseDto body = new LoginResponseDto(request.email(), accessToken);
+            return ResponseEntity.ok(body);
+
+        } catch (BadCredentialsException exception) {
+            loginService.addLoginAttempt(request.email(), false);
+            throw exception;
+        }
     }
 
 
@@ -62,6 +86,16 @@ public class AuthController {
         String email = JwtHelper.extractUsername(token.replace("Bearer ", ""));
         List<LoginAttempt> loginAttempts = loginService.findRecentLoginAttempts(email);
         return ResponseEntity.ok(convertToDTOs(loginAttempts));
+    }
+
+    @Operation(summary = "Get quote if logged in")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Logged in successfully.", content = @Content(schema = @Schema(implementation = String.class))),
+            @ApiResponse(responseCode = "403", description = "Not Logged in successfully.", content = @Content(schema = @Schema(implementation = String.class)))
+    })
+    @GetMapping(value = "/quote")
+    public String quote() {
+        return "quote";
     }
 
     private List<LoginAttemptResponseDto> convertToDTOs(List<LoginAttempt> loginAttempts) {

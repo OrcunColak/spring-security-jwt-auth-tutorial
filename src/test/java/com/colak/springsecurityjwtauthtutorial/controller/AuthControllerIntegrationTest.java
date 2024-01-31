@@ -165,7 +165,7 @@ class AuthControllerIntegrationTest {
                 .getResponseBody();
 
         assertThat(loginResponse).isNotNull();
-        assertThat(loginResponse.token()).isNotBlank();
+        assertThat(loginResponse.accessToken()).isNotBlank();
     }
 
     @Test
@@ -266,11 +266,11 @@ class AuthControllerIntegrationTest {
                 .returnResult()
                 .getResponseBody();
         assertThat(loginResponse).isNotNull();
-        assertThat(loginResponse.token()).isNotBlank();
+        assertThat(loginResponse.accessToken()).isNotBlank();
 
         List<LoginAttemptResponseDto> loginAttemptsResponse = webTestClient
                 .get().uri(LOGIN_ATTEMPTS_URL)
-                .header("Authorization", "Bearer " + loginResponse.token())
+                .header("Authorization", "Bearer " + loginResponse.accessToken())
                 .exchange()
                 .expectStatus()
                 .isOk()

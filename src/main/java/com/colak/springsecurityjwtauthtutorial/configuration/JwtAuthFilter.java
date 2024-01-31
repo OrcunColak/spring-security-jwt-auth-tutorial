@@ -7,9 +7,11 @@ import com.colak.springsecurityjwtauthtutorial.service.UserDetailsServiceImpl;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
+import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
@@ -21,6 +23,7 @@ import java.io.IOException;
 @Component
 public class JwtAuthFilter extends OncePerRequestFilter {
 
+    public static final String COOKIE_NAME = "accessToken";
     private final UserDetailsServiceImpl userDetailsService;
     private final ObjectMapper objectMapper;
 
@@ -29,41 +32,69 @@ public class JwtAuthFilter extends OncePerRequestFilter {
         this.objectMapper = objectMapper;
     }
 
+
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
         try {
-            String authHeader = request.getHeader("Authorization");
-
-            String token = null;
-            String username = null;
-            if (authHeader != null && authHeader.startsWith("Bearer ")) {
-                token = authHeader.substring(7);
-                username = JwtHelper.extractUsername(token);
+            String token = getTokenFromHeader(request);
+            if (token == null) {
+                token = getTokenFromCookie(request);
             }
 
-//      If the accessToken is null. It will pass the request to next filter in the chain.
-//      Any login and signup requests will not have jwt token in their header, therefore they will be passed to next filter chain.
+            // If the accessToken is null. It will pass the request to next filter in the chain.
+            // Any login and signup requests that does not have jwt token will be passed to next filter chain.
             if (token == null) {
                 filterChain.doFilter(request, response);
                 return;
             }
 
-//       If any accessToken is present, then it will validate the token and then authenticate the request in security context
-            if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-                UserDetails userDetails = userDetailsService.loadUserByUsername(username);
-                if (JwtHelper.validateToken(token, userDetails)) {
-                    UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(userDetails, null, null);
-                    authenticationToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-                    SecurityContextHolder.getContext().setAuthentication(authenticationToken);
-                }
-            }
+            String username = JwtHelper.extractUsername(token);
+
+            validateTokenAndUser(request, username, token);
 
             filterChain.doFilter(request, response);
         } catch (AccessDeniedException e) {
             ApiErrorResponseDto errorResponse = new ApiErrorResponseDto(HttpServletResponse.SC_FORBIDDEN, e.getMessage());
             response.setStatus(HttpServletResponse.SC_FORBIDDEN);
             response.getWriter().write(toJson(errorResponse));
+        }
+    }
+
+    private String getTokenFromHeader(HttpServletRequest request) {
+        String token = null;
+        String authHeader = request.getHeader("Authorization");
+        if (authHeader != null && authHeader.startsWith("Bearer ")) {
+            token = authHeader.substring(7);
+        }
+        return token;
+    }
+
+    private String getTokenFromCookie(HttpServletRequest request) {
+        String token = null;
+        if (request.getCookies() != null) {
+            for (Cookie cookie : request.getCookies()) {
+                if (cookie.getName().equals(COOKIE_NAME)) {
+                    token = cookie.getValue();
+                    break;
+                }
+            }
+        }
+        return token;
+    }
+
+    private void validateTokenAndUser(HttpServletRequest request, String username, String token) {
+        // If any accessToken is present, then it will validate the token and then authenticate the request in security context
+        SecurityContext securityContext = SecurityContextHolder.getContext();
+        if (username != null && securityContext.getAuthentication() == null) {
+            UserDetails userDetails = userDetailsService.loadUserByUsername(username);
+            if (JwtHelper.validateToken(token, userDetails)) {
+
+                UsernamePasswordAuthenticationToken authenticationToken =
+                        new UsernamePasswordAuthenticationToken(userDetails, null, null);
+                authenticationToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                securityContext.setAuthentication(authenticationToken);
+            }
         }
     }
 
