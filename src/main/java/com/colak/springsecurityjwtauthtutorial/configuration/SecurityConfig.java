@@ -35,20 +35,22 @@ public class SecurityConfig {
                 .cors(AbstractHttpConfigurer::disable)
                 .csrf(AbstractHttpConfigurer::disable)
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-//        Set permissions on endpoints
+
                 .authorizeHttpRequests(auth -> auth
-//            our public endpoints
+                        // Permit access to our public endpoints
                         .requestMatchers(HttpMethod.POST, "/api/auth/signup/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/auth/login/**").permitAll()
-                        // swagger
+                        // Permit access to swagger
                         .requestMatchers(HttpMethod.GET, "/authentication-docs/**").permitAll()
-//            our private endpoints
+                        // Our private endpoints
                         .anyRequest().authenticated())
+                // Provide custom authentication manager
                 .authenticationManager(authenticationManager)
 
-//        We need jwt filter before the UsernamePasswordAuthenticationFilter.
-//        Since we need every request to be authenticated before going through spring security filter.
-//        (UsernamePasswordAuthenticationFilter creates a UsernamePasswordAuthenticationToken from a username and password that are submitted in the HttpServletRequest.)
+                // We need jwt filter before the UsernamePasswordAuthenticationFilter.
+                // Since we need every request to be authenticated before going through spring security filter.
+                // (UsernamePasswordAuthenticationFilter creates a UsernamePasswordAuthenticationToken from a username
+                // and password that are submitted in the HttpServletRequest.)
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
                 .build();
     }
@@ -56,7 +58,9 @@ public class SecurityConfig {
     @Bean
     public AuthenticationManager authenticationManager(HttpSecurity http) throws Exception {
         AuthenticationManagerBuilder authenticationManagerBuilder = http.getSharedObject(AuthenticationManagerBuilder.class);
-        authenticationManagerBuilder.userDetailsService(userDetailsService).passwordEncoder(passwordEncoder());
+        authenticationManagerBuilder
+                .userDetailsService(userDetailsService)
+                .passwordEncoder(passwordEncoder());
         return authenticationManagerBuilder.build();
     }
 }
