@@ -23,7 +23,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping(path = "/api/auth")
@@ -68,6 +67,6 @@ public class AuthController {
     private List<LoginAttemptResponseDto> convertToDTOs(List<LoginAttempt> loginAttempts) {
         return loginAttempts.stream()
                 .map(LoginAttemptResponseDto::convertToDTO)
-                .collect(Collectors.toList());
+                .toList();
     }
 }

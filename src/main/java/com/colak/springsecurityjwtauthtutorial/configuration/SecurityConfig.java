@@ -40,6 +40,7 @@ public class SecurityConfig {
 //            our public endpoints
                         .requestMatchers(HttpMethod.POST, "/api/auth/signup/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/auth/login/**").permitAll()
+                        // swagger
                         .requestMatchers(HttpMethod.GET, "/authentication-docs/**").permitAll()
 //            our private endpoints
                         .anyRequest().authenticated())
