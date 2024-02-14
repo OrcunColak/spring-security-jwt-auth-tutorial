@@ -1,6 +1,6 @@
 package com.colak.springsecurityjwtauthtutorial.configuration;
 
-import com.colak.springsecurityjwtauthtutorial.service.UserDetailsServiceImpl;
+import com.colak.springsecurityjwtauthtutorial.service.userdetails.UserDetailsServiceImpl;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -23,6 +23,7 @@ public class SecurityConfig {
 
     private final UserDetailsServiceImpl userDetailsService;
     private final JwtAuthFilter jwtAuthFilter;
+    private final AuthEntryPointJwt unauthorizedHandler;
 
     @Bean
     public PasswordEncoder passwordEncoder() {
@@ -33,7 +34,11 @@ public class SecurityConfig {
     public SecurityFilterChain filterChain(HttpSecurity http, AuthenticationManager authenticationManager) throws Exception {
         return http
                 .cors(AbstractHttpConfigurer::disable)
+                // This is often done when using stateless authentication with tokens
                 .csrf(AbstractHttpConfigurer::disable)
+                // Configures an authentication entry point to handle unauthorized access (AccessDeniedException)
+                .exceptionHandling(exception -> exception.authenticationEntryPoint(unauthorizedHandler))
+                // This means that the application won't create or use HTTP sessions for security.
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 
                 .authorizeHttpRequests(auth -> auth

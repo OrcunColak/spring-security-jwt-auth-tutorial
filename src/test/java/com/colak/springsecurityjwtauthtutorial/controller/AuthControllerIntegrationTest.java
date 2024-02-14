@@ -103,6 +103,7 @@ class AuthControllerIntegrationTest {
 
     @Test
     void shouldReturnBadRequest_WhenSignupRequestIsNotValid() {
+        // Send bad e-mail
         String request = """
                 {
                   "name": " ",
@@ -170,6 +171,7 @@ class AuthControllerIntegrationTest {
 
     @Test
     void shouldReturnBadCredential() {
+        // Sign up
         String signupRequest = """
                 {
                   "name": "john",
@@ -185,6 +187,7 @@ class AuthControllerIntegrationTest {
                 .expectStatus()
                 .isCreated();
 
+        // Password is different
         String loginRequestWithWrongPassword = """
                 {
                   "email": "john@gmail.com",
@@ -311,24 +314,20 @@ class AuthControllerIntegrationTest {
 
     @Test
     void shouldReturnUnauthorized_withEmptyAuthorizationHeader() {
-        webTestClient
+        // Send empty Authorization
+        // isUnauthorized : client making the request lacks valid authentication credentials
+        // isForbidden : client has authenticated itself, but it does not have the necessary permissions
+        String errorResponse = webTestClient
                 .get().uri(LOGIN_ATTEMPTS_URL)
                 .header("Authorization", " ")
                 .exchange()
                 .expectStatus()
-                .isForbidden();
+                .isUnauthorized()
+                .expectBody(String.class)
+                .returnResult()
+                .getResponseBody();
 
-//    String errorResponse = webTestClient
-//        .get().uri(LOGIN_ATTEMPTS_URL)
-//        .header("Authorization", " ")
-//        .exchange()
-//        .expectStatus()
-//        .isUnauthorized()
-//        .expectBody(String.class)
-//        .returnResult()
-//        .getResponseBody();
-//
-//    assertThat(errorResponse).isNotNull();
-//    assertThat(errorResponse).isEqualTo("{\"errorCode\":401,\"description\":\"Access denied: Authorization header is required.\"}");
+        assertThat(errorResponse).isNotNull();
+        assertThat(errorResponse).isEqualTo("{\"errorCode\":401,\"description\":\"Access denied: Authorization header is required.\"}");
     }
 }

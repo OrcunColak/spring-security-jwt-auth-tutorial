@@ -49,16 +49,23 @@ public class AuthController {
         return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 
+    /**
+     * The user does not have a Jwt Token in the request's Authorization header
+     * Upon login the server needs to provide a JWT Token in return.
+     */
     // http://localhost:8080/api/auth/login
     @PostMapping(value = "/login")
     public ResponseEntity<LoginResponseDto> login(@Valid @RequestBody LoginRequestDto request,
                                                   HttpServletResponse response) {
         try {
+            // First authenticate the user
             authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(request.email(), request.password()));
 
+            // Generate a new Jwt token
             String accessToken = JwtHelper.generateToken(request.email());
             loginService.addLoginAttempt(request.email(), true);
 
+            // Add the token to ResponseCookie
             // set cookie expiry for 30 minutes
             long cookieExpiry = 1800;
 

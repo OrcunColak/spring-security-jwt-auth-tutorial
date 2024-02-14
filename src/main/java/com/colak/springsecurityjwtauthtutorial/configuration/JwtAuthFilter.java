@@ -3,7 +3,7 @@ package com.colak.springsecurityjwtauthtutorial.configuration;
 import com.colak.springsecurityjwtauthtutorial.dto.ApiErrorResponseDto;
 import com.colak.springsecurityjwtauthtutorial.exception.AccessDeniedException;
 import com.colak.springsecurityjwtauthtutorial.helper.JwtHelper;
-import com.colak.springsecurityjwtauthtutorial.service.UserDetailsServiceImpl;
+import com.colak.springsecurityjwtauthtutorial.service.userdetails.UserDetailsServiceImpl;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -90,6 +90,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
             UserDetails userDetails = userDetailsService.loadUserByUsername(username);
             if (JwtHelper.validateToken(token, userDetails)) {
 
+                // Create a token and set to SecurityContext, so that we can be sure that user is authenticated
                 UsernamePasswordAuthenticationToken authenticationToken =
                         new UsernamePasswordAuthenticationToken(userDetails, null, null);
                 authenticationToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));

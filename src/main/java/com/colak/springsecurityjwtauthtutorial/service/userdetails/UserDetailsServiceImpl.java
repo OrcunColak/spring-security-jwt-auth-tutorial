@@ -1,4 +1,4 @@
-package com.colak.springsecurityjwtauthtutorial.service;
+package com.colak.springsecurityjwtauthtutorial.service.userdetails;
 
 import com.colak.springsecurityjwtauthtutorial.entity.User;
 import com.colak.springsecurityjwtauthtutorial.exception.NotFoundException;
@@ -13,7 +13,6 @@ import org.springframework.stereotype.Service;
 public class UserDetailsServiceImpl implements UserDetailsService {
 
     private final UserRepository repository;
-
 
     @Override
     public UserDetails loadUserByUsername(String email) {
