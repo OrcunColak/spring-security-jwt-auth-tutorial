@@ -9,6 +9,7 @@ import io.swagger.v3.oas.models.security.SecurityRequirement;
 import io.swagger.v3.oas.models.security.SecurityScheme;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.web.filter.ForwardedHeaderFilter;
 
 @Configuration
 @OpenAPIDefinition
@@ -26,6 +27,12 @@ public class SwaggerConfiguration {
                                 .addSecuritySchemes("bearerToken", createJwtBearerScheme())
                                 .addSecuritySchemes("cookie", createCookieScheme())
                 );
+    }
+
+    // This filter is often used in Spring Boot applications to handle forwarded headers, typically used in reverse proxy setups.
+    @Bean
+    ForwardedHeaderFilter forwardedHeaderFilter() {
+        return new ForwardedHeaderFilter();
     }
 
     /**
