@@ -4,13 +4,11 @@ import com.colak.springtutorial.exception.AccessDeniedException;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
-import io.jsonwebtoken.security.Keys;
 import io.jsonwebtoken.security.SignatureException;
 import lombok.experimental.UtilityClass;
 import org.springframework.security.core.userdetails.UserDetails;
 
-import java.security.Key;
+import javax.crypto.SecretKey;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Date;
@@ -18,7 +16,7 @@ import java.util.Date;
 @UtilityClass
 public class JwtHelper {
 
-    private static final Key SECRET_KEY = Keys.secretKeyFor(SignatureAlgorithm.HS256);
+    private static final SecretKey SECRET_KEY = Jwts.SIG.HS256.key().build();
     private static final int MINUTES = 60;
 
     /**
@@ -32,7 +30,7 @@ public class JwtHelper {
                 .subject(email)
                 .issuedAt(Date.from(now))
                 .expiration(Date.from(now.plus(MINUTES, ChronoUnit.MINUTES)))
-                .signWith(SignatureAlgorithm.HS256, SECRET_KEY)
+                .signWith(SECRET_KEY,Jwts.SIG.HS256)
                 .compact();
     }
 
@@ -70,7 +68,7 @@ public class JwtHelper {
         try {
             return Jwts
                     .parser()
-                    .setSigningKey(SECRET_KEY)
+                    .verifyWith(SECRET_KEY)
                     .build()
                     .parseSignedClaims(token)
                     .getPayload();
