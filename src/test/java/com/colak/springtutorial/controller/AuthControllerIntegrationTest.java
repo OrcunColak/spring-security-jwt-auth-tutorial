@@ -1,26 +1,22 @@
 package com.colak.springtutorial.controller;
 
 import com.colak.springtutorial.dto.ApiErrorResponseDto;
-import com.colak.springtutorial.dto.loginattempt.LoginAttemptResponseDto;
+import com.colak.springtutorial.dto.login.LoginRequestDto;
 import com.colak.springtutorial.dto.login.LoginResponseDto;
+import com.colak.springtutorial.dto.loginattempt.LoginAttemptResponseDto;
+import com.colak.springtutorial.dto.signup.SignupRequestDto;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.reactive.AutoConfigureWebTestClient;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
 import org.springframework.http.MediaType;
-import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.reactive.server.WebTestClient;
-import org.testcontainers.containers.PostgreSQLContainer;
-import org.testcontainers.junit.jupiter.Container;
-import org.testcontainers.junit.jupiter.Testcontainers;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@Testcontainers
-@ActiveProfiles("test")
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @AutoConfigureWebTestClient
 class AuthControllerIntegrationTest {
@@ -34,26 +30,20 @@ class AuthControllerIntegrationTest {
     @Autowired
     private WebTestClient webTestClient;
 
-    @SuppressWarnings("unused")
-    @Container
-    @ServiceConnection
-    private static final PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:13");
-
 
     //  Test signup endpoint
     @Test
     void shouldSignupUser() {
-        String request = """
-                {
-                  "name": "mina",
-                  "email": "mina@gmail.com",
-                  "password": "123456"
-                }
-                """;
+        SignupRequestDto signupRequest = new SignupRequestDto(
+                "test@example.com",
+                "password123",
+                new ArrayList<>()
+        );
+
         webTestClient
                 .post().uri(SIGNUP_URL)
                 .contentType(MediaType.APPLICATION_JSON)
-                .bodyValue(request)
+                .bodyValue(signupRequest)
                 .exchange()
                 .expectStatus()
                 .isCreated();
@@ -62,33 +52,25 @@ class AuthControllerIntegrationTest {
     @Test
     void shouldReturnDuplicate_onExistingEmail() {
         // signup user
-        String request = """
-                {
-                  "name": "sandra",
-                  "email": "sandra@gmail.com",
-                  "password": "123456"
-                }
-                """;
+        SignupRequestDto signupRequest = new SignupRequestDto(
+                "sandra@gmail.com",
+                "123456",
+                new ArrayList<>()
+        );
+
         webTestClient
                 .post().uri(SIGNUP_URL)
                 .contentType(MediaType.APPLICATION_JSON)
-                .bodyValue(request)
+                .bodyValue(signupRequest)
                 .exchange()
                 .expectStatus()
                 .isCreated();
 
         // signup another user with duplicate email
-        String requestWithSameEmail = """
-                {
-                  "name": "Anna",
-                  "email": "sandra@gmail.com",
-                  "password": "654321"
-                }
-                """;
         ApiErrorResponseDto errorResponse = webTestClient
                 .post().uri(SIGNUP_URL)
                 .contentType(MediaType.APPLICATION_JSON)
-                .bodyValue(requestWithSameEmail)
+                .bodyValue(signupRequest)
                 .exchange()
                 .expectStatus()
                 .is4xxClientError()
@@ -103,18 +85,16 @@ class AuthControllerIntegrationTest {
 
     @Test
     void shouldReturnBadRequest_WhenSignupRequestIsNotValid() {
-        // Send bad e-mail
-        String request = """
-                {
-                  "name": " ",
-                  "email": "mina@",
-                  "password": "456"
-                }
-                """;
+        // Send bad signup request
+        SignupRequestDto signupRequest = new SignupRequestDto(
+                "sandra@",
+                "123",
+                new ArrayList<>()
+        );
         ApiErrorResponseDto errorResponse = webTestClient
                 .post().uri(SIGNUP_URL)
                 .contentType(MediaType.APPLICATION_JSON)
-                .bodyValue(request)
+                .bodyValue(signupRequest)
                 .exchange()
                 .expectStatus()
                 .is4xxClientError()
@@ -126,20 +106,18 @@ class AuthControllerIntegrationTest {
         assertThat(errorResponse.errorCode()).isEqualTo(VALIDATION_ERROR_CODE);
         assertThat(errorResponse.description()).contains(
                 "password: Password must be between 6 and 20 characters",
-                "email: Invalid email format",
-                "name: Name cannot be blank");
+                "email: Invalid email format");
     }
 
     //  Test login endpoint
     @Test
     void shouldReturnJWTToken_WhenUserIsRegistered() {
-        String signupRequest = """
-                {
-                  "name": "nick",
-                  "email": "nick@gmail.com",
-                  "password": "123456"
-                }
-                """;
+        SignupRequestDto signupRequest = new SignupRequestDto(
+                "nick@gmail.com",
+                "123456",
+                new ArrayList<>()
+        );
+
         webTestClient
                 .post().uri(SIGNUP_URL)
                 .contentType(MediaType.APPLICATION_JSON)
@@ -148,12 +126,7 @@ class AuthControllerIntegrationTest {
                 .expectStatus()
                 .isCreated();
 
-        String loginRequest = """
-                {
-                  "email": "nick@gmail.com",
-                  "password": "123456"
-                }
-                """;
+        LoginRequestDto loginRequest = new LoginRequestDto("nick@gmail.com","123456");
         LoginResponseDto loginResponse = webTestClient
                 .post().uri(LOGIN_URL)
                 .contentType(MediaType.APPLICATION_JSON)
@@ -172,13 +145,11 @@ class AuthControllerIntegrationTest {
     @Test
     void shouldReturnBadCredential() {
         // Sign up
-        String signupRequest = """
-                {
-                  "name": "john",
-                  "email": "john@gmail.com",
-                  "password": "123456"
-                }
-                """;
+        SignupRequestDto signupRequest = new SignupRequestDto(
+                "john@gmail.com",
+                "123456",
+                new ArrayList<>()
+        );
         webTestClient
                 .post().uri(SIGNUP_URL)
                 .contentType(MediaType.APPLICATION_JSON)
@@ -188,12 +159,8 @@ class AuthControllerIntegrationTest {
                 .isCreated();
 
         // Password is different
-        String loginRequestWithWrongPassword = """
-                {
-                  "email": "john@gmail.com",
-                  "password": "12345678910"
-                }
-                """;
+        LoginRequestDto loginRequestWithWrongPassword = new LoginRequestDto("john@gmail.com","12345678910");
+
         ApiErrorResponseDto errorResponse = webTestClient
                 .post().uri(LOGIN_URL)
                 .contentType(MediaType.APPLICATION_JSON)
@@ -237,13 +204,11 @@ class AuthControllerIntegrationTest {
     //  Test loginAttempts endpoint
     @Test
     void shouldReturnLoginAttempts_WhenUserIsRegistered() {
-        String signupRequest = """
-                {
-                  "name": "william",
-                  "email": "william@gmail.com",
-                  "password": "123456"
-                }
-                """;
+        SignupRequestDto signupRequest = new SignupRequestDto(
+                "william@gmail.com",
+                "123456",
+                new ArrayList<>()
+        );
         webTestClient
                 .post().uri(SIGNUP_URL)
                 .contentType(MediaType.APPLICATION_JSON)
@@ -252,12 +217,7 @@ class AuthControllerIntegrationTest {
                 .expectStatus()
                 .isCreated();
 
-        String loginRequest = """
-                {
-                  "email": "william@gmail.com",
-                  "password": "123456"
-                }
-                """;
+        LoginRequestDto loginRequest = new LoginRequestDto("william@gmail.com","123456");
         LoginResponseDto loginResponse = webTestClient
                 .post().uri(LOGIN_URL)
                 .contentType(MediaType.APPLICATION_JSON)
@@ -296,7 +256,7 @@ class AuthControllerIntegrationTest {
 //        .header("Authorization", "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJtaW5hQGdtYWlsLmNvbSIsImlhdCI6MTcwMjMwMjE0MCwiZXhwIjoxNzAyMzA1NzQwfQ.P0dlSC385lgtyRAr9Ako_hocxa2CvBV_hPAj-RjNtTw")
                 .exchange()
                 .expectStatus()
-                .isForbidden();
+                .isUnauthorized();
 
 //    String errorResponse = webTestClient
 //        .get().uri(LOGIN_ATTEMPTS_URL)

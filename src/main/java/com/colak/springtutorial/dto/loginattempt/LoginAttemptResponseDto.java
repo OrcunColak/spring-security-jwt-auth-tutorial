@@ -1,6 +1,7 @@
 package com.colak.springtutorial.dto.loginattempt;
 
-import com.colak.springtutorial.entity.LoginAttempt;
+
+import com.colak.springtutorial.jpa.LoginAttempt;
 
 import java.time.LocalDateTime;
 
@@ -9,6 +10,6 @@ public record LoginAttemptResponseDto(
         boolean success) {
 
     public static LoginAttemptResponseDto convertToDTO(LoginAttempt loginAttempt) {
-        return new LoginAttemptResponseDto(loginAttempt.createdAt(), loginAttempt.success());
+        return new LoginAttemptResponseDto(loginAttempt.getCreatedAt(), loginAttempt.isSuccess());
     }
 }

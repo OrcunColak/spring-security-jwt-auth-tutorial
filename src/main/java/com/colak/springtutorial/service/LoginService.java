@@ -1,6 +1,6 @@
 package com.colak.springtutorial.service;
 
-import com.colak.springtutorial.entity.LoginAttempt;
+import com.colak.springtutorial.jpa.LoginAttempt;
 import com.colak.springtutorial.repository.LoginAttemptRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -18,10 +18,10 @@ public class LoginService {
     @Transactional
     public void addLoginAttempt(String email, boolean success) {
         LoginAttempt loginAttempt = new LoginAttempt(email, success, LocalDateTime.now());
-        repository.add(loginAttempt);
+        repository.save(loginAttempt);
     }
 
     public List<LoginAttempt> findRecentLoginAttempts(String email) {
-        return repository.findRecent(email);
+        return repository.findTop5ByEmailOrderByCreatedAtDesc(email);
     }
 }

@@ -1,38 +1,13 @@
 package com.colak.springtutorial.repository;
 
-import com.colak.springtutorial.entity.User;
-import org.springframework.jdbc.core.simple.JdbcClient;
+import com.colak.springtutorial.jpa.User;
+import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
-import org.springframework.util.Assert;
 
 import java.util.Optional;
 
 @Repository
-public class UserRepository {
+public interface UserRepository extends JpaRepository<User, Long> {
 
-    private static final String INSERT = "INSERT INTO authentication.user (name, email, password) VALUES(:name, :email, :password)";
-    private static final String FIND_BY_EMAIL = "SELECT * FROM authentication.user WHERE email = :email";
-
-    private final JdbcClient jdbcClient;
-
-    public UserRepository(JdbcClient jdbcClient) {
-        this.jdbcClient = jdbcClient;
-    }
-
-    public void add(User user) {
-        long affected = jdbcClient.sql(INSERT)
-                .param("name", user.name())
-                .param("email", user.email())
-                .param("password", user.password())
-                .update();
-
-        Assert.isTrue(affected == 1, "Could not add user.");
-    }
-
-    public Optional<User> findByEmail(String email) {
-        return jdbcClient.sql(FIND_BY_EMAIL)
-                .param("email", email)
-                .query(User.class)
-                .optional();
-    }
+    Optional<User> findByEmail(String username);
 }
