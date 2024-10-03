@@ -3,9 +3,7 @@ package com.colak.springtutorial.controller;
 import com.colak.springtutorial.configuration.JwtAuthFilter;
 import com.colak.springtutorial.dto.login.LoginRequestDto;
 import com.colak.springtutorial.dto.login.LoginResponseDto;
-import com.colak.springtutorial.dto.loginattempt.LoginAttemptResponseDto;
 import com.colak.springtutorial.helper.JwtHelper;
-import com.colak.springtutorial.jpa.LoginAttempt;
 import com.colak.springtutorial.service.LoginService;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
@@ -16,19 +14,15 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-
-import java.util.List;
 
 @RestController
 @RequestMapping(path = "/api/auth")
 @RequiredArgsConstructor
-public class AuthController {
+public class LoginController {
 
     private final AuthenticationManager authenticationManager;
     private final LoginService loginService;
@@ -68,20 +62,5 @@ public class AuthController {
             loginService.addLoginAttempt(request.email(), false);
             throw exception;
         }
-    }
-
-
-    // http://localhost:8080/api/auth/loginAttempts
-    @GetMapping(value = "/loginAttempts")
-    public ResponseEntity<List<LoginAttemptResponseDto>> loginAttempts(@RequestHeader("Authorization") String token) {
-        String email = JwtHelper.extractUsername(token.replace("Bearer ", ""));
-        List<LoginAttempt> loginAttempts = loginService.findRecentLoginAttempts(email);
-        return ResponseEntity.ok(convertToDTOs(loginAttempts));
-    }
-
-    private List<LoginAttemptResponseDto> convertToDTOs(List<LoginAttempt> loginAttempts) {
-        return loginAttempts.stream()
-                .map(LoginAttemptResponseDto::convertToDTO)
-                .toList();
     }
 }

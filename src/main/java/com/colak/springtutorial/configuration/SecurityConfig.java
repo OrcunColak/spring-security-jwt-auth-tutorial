@@ -31,7 +31,7 @@ public class SecurityConfig {
     }
 
     @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http, AuthenticationManager authenticationManager) throws Exception {
+    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         return http
                 .cors(AbstractHttpConfigurer::disable)
                 // This is often done when using stateless authentication with tokens
@@ -50,7 +50,7 @@ public class SecurityConfig {
                         // Our private endpoints
                         .anyRequest().authenticated())
                 // Provide custom authentication manager
-                .authenticationManager(authenticationManager)
+                // .authenticationManager(authenticationManager)
 
                 // We need jwt filter before the UsernamePasswordAuthenticationFilter.
                 // Since we need every request to be authenticated before going through spring security filter.
