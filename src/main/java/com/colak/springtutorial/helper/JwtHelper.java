@@ -47,7 +47,7 @@ public class JwtHelper {
         return claims.getSubject();
     }
 
-    private static boolean isTokenExpired(String token) {
+    public static boolean isTokenExpired(String token) {
         Date expiration = extractExpiration(token);
         return expiration.before(new Date());
     }

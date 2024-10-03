@@ -1,6 +1,7 @@
 package com.colak.springtutorial.configuration;
 
 import com.colak.springtutorial.service.userdetails.UserDetailsServiceImpl;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -22,8 +23,8 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 public class SecurityConfig {
 
     private final UserDetailsServiceImpl userDetailsService;
-    private final JwtAuthFilter jwtAuthFilter;
     private final UnauthorizedHandler unauthorizedHandler;
+    private final JwtAuthenticationProvider jwtAuthenticationProvider;
 
     @Bean
     public PasswordEncoder passwordEncoder() {
@@ -31,7 +32,10 @@ public class SecurityConfig {
     }
 
     @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain filterChain(HttpSecurity http, ObjectMapper objectMapper, AuthenticationManager authenticationManager)
+            throws Exception {
+        JwtAuthFilter jwtAuthFilter = new JwtAuthFilter(objectMapper, authenticationManager);
+
         return http
                 .cors(AbstractHttpConfigurer::disable)
                 // This is often done when using stateless authentication with tokens
@@ -60,12 +64,14 @@ public class SecurityConfig {
                 .build();
     }
 
+
     @Bean
     public AuthenticationManager authenticationManager(HttpSecurity http) throws Exception {
         AuthenticationManagerBuilder authenticationManagerBuilder = http.getSharedObject(AuthenticationManagerBuilder.class);
         authenticationManagerBuilder
                 .userDetailsService(userDetailsService)
                 .passwordEncoder(passwordEncoder());
+        authenticationManagerBuilder.authenticationProvider(jwtAuthenticationProvider);
         return authenticationManagerBuilder.build();
     }
 }

@@ -1,6 +1,5 @@
 package com.colak.springtutorial.controller;
 
-import com.colak.springtutorial.configuration.JwtAuthFilter;
 import com.colak.springtutorial.dto.login.LoginRequestDto;
 import com.colak.springtutorial.dto.login.LoginResponseDto;
 import com.colak.springtutorial.helper.JwtHelper;
@@ -18,6 +17,8 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+
+import static com.colak.springtutorial.configuration.BearerAuthenticationConverter.COOKIE_NAME;
 
 @RestController
 @RequestMapping(path = "/api/auth")
@@ -47,7 +48,7 @@ public class LoginController {
             // set cookie expiry for 30 minutes
             long cookieExpiry = 1800;
 
-            ResponseCookie cookie = ResponseCookie.from(JwtAuthFilter.COOKIE_NAME, accessToken)
+            ResponseCookie cookie = ResponseCookie.from(COOKIE_NAME, accessToken)
                     .httpOnly(true)
                     .secure(false)
                     .path("/")

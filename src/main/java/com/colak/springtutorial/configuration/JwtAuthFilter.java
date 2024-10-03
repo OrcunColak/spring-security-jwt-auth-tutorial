@@ -1,103 +1,63 @@
 package com.colak.springtutorial.configuration;
 
 import com.colak.springtutorial.dto.ApiErrorResponseDto;
-import com.colak.springtutorial.exception.AccessDeniedException;
-import com.colak.springtutorial.helper.JwtHelper;
-import com.colak.springtutorial.service.userdetails.UserDetailsServiceImpl;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.FilterChain;
-import jakarta.servlet.ServletException;
-import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import org.springframework.http.HttpHeaders;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.context.SecurityContext;
+import lombok.RequiredArgsConstructor;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
-import org.springframework.stereotype.Component;
+import org.springframework.security.web.util.matcher.AnyRequestMatcher;
+import org.springframework.security.web.util.matcher.RequestMatcher;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
 
-@Component
+@RequiredArgsConstructor
 public class JwtAuthFilter extends OncePerRequestFilter {
 
-    public static final String COOKIE_NAME = "accessToken";
-    private final UserDetailsServiceImpl userDetailsService;
     private final ObjectMapper objectMapper;
+    private final AuthenticationManager authenticationManager;
+    private final RequestMatcher requestMatcher = AnyRequestMatcher.INSTANCE;
 
-    public JwtAuthFilter(UserDetailsServiceImpl userDetailsService, ObjectMapper objectMapper) {
-        this.userDetailsService = userDetailsService;
-        this.objectMapper = objectMapper;
-    }
-
+    private final BearerAuthenticationConverter authenticationConverter = new BearerAuthenticationConverter();
 
     @Override
     protected void doFilterInternal(HttpServletRequest httpServletRequest, HttpServletResponse httpServletResponse, FilterChain filterChain)
-            throws ServletException, IOException {
+            throws IOException {
         try {
-            String token = getTokenFromRequestHeader(httpServletRequest);
-            if (token == null) {
-                token = getTokenFromCookie(httpServletRequest);
-            }
-
-            // If the accessToken is null. It will pass the request to next filter in the chain.
-            // Any login and signup requests that does not have jwt token will be passed to next filter chain.
-            if (token == null) {
+            // Do not attempt to authenticate if the filter does not match the route
+            if (!requestMatcher.matches(httpServletRequest)) {
                 filterChain.doFilter(httpServletRequest, httpServletResponse);
                 return;
             }
 
-            String username = JwtHelper.extractUsername(token);
+            // Do not attempt to authenticate if authentication is not present
+            Authentication authentication = authenticationConverter.convert(httpServletRequest);
+            if (authentication == null) {
+                filterChain.doFilter(httpServletRequest, httpServletResponse);
+                return;
+            }
 
-            validateTokenAndUser(httpServletRequest, username, token);
+            // Do not attempt to authenticate if request is already authenticated
+            // Authentication existingAuthentication = SecurityContextHolder.getContext().getAuthentication();
+            // if (existingAuthentication != null && existingAuthentication.isAuthenticated()) {
+            //     filterChain.doFilter(httpServletRequest, httpServletResponse);
+            //     return;
+            // }
+
+            // Perform the authentication and set it in the security context
+            Authentication populatedAuthentication = authenticationManager.authenticate(authentication);
+            SecurityContextHolder.getContext().setAuthentication(populatedAuthentication);
+            httpServletRequest.setAttribute("isAuthenticated", true);
 
             filterChain.doFilter(httpServletRequest, httpServletResponse);
-        } catch (AccessDeniedException e) {
-            ApiErrorResponseDto errorResponse = new ApiErrorResponseDto(HttpServletResponse.SC_FORBIDDEN, e.getMessage());
+        } catch (Exception exception) {
+            ApiErrorResponseDto errorResponse = new ApiErrorResponseDto(HttpServletResponse.SC_FORBIDDEN, exception.getMessage());
             httpServletResponse.setStatus(HttpServletResponse.SC_FORBIDDEN);
             httpServletResponse.getWriter().write(toJson(errorResponse));
-        }
-    }
-
-    private String getTokenFromRequestHeader(HttpServletRequest httpServletRequest) {
-        String token = null;
-        String authHeader = httpServletRequest.getHeader(HttpHeaders.AUTHORIZATION);
-        if (authHeader != null && authHeader.startsWith("Bearer ")) {
-            token = authHeader.substring(7);
-        }
-        return token;
-    }
-
-    private String getTokenFromCookie(HttpServletRequest httpServletRequest) {
-        String token = null;
-        if (httpServletRequest.getCookies() != null) {
-            for (Cookie cookie : httpServletRequest.getCookies()) {
-                if (cookie.getName().equals(COOKIE_NAME)) {
-                    token = cookie.getValue();
-                    break;
-                }
-            }
-        }
-        return token;
-    }
-
-    private void validateTokenAndUser(HttpServletRequest request, String username, String token) {
-        // If any accessToken is present, then it will validate the token and then authenticate the request in security context
-        SecurityContext securityContext = SecurityContextHolder.getContext();
-        if (username != null && securityContext.getAuthentication() == null) {
-            UserDetails userDetails = userDetailsService.loadUserByUsername(username);
-            if (JwtHelper.validateToken(token, userDetails)) {
-
-                // Create a token and set to SecurityContext, so that we can be sure that user is authenticated
-                UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(userDetails,
-                        userDetails.getPassword(), userDetails.getAuthorities());
-
-                authenticationToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-                securityContext.setAuthentication(authenticationToken);
-            }
         }
     }
 

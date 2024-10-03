@@ -1,5 +1,6 @@
 package com.colak.springtutorial.controller;
 
+import com.colak.springtutorial.configuration.BearerAuthenticationConverter;
 import com.colak.springtutorial.dto.login.LoginRequestDto;
 import com.colak.springtutorial.dto.login.LoginResponseDto;
 import com.colak.springtutorial.dto.loginattempt.LoginAttemptResponseDto;
@@ -8,6 +9,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.reactive.AutoConfigureWebTestClient;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.reactive.server.WebTestClient;
 
@@ -22,7 +24,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 @AutoConfigureWebTestClient
 class LoginAttemptControllerIT {
 
-    static final String LOGIN_ATTEMPTS_URL = "/api/auth/loginAttempts";
+    private static final String LOGIN_ATTEMPTS_URL = "/api/auth/loginAttempts";
 
     @SuppressWarnings("unused")
     @Autowired
@@ -60,7 +62,7 @@ class LoginAttemptControllerIT {
 
         List<LoginAttemptResponseDto> loginAttemptsResponse = webTestClient
                 .get().uri(LOGIN_ATTEMPTS_URL)
-                .header("Authorization", "Bearer " + loginResponse.accessToken())
+                .header(HttpHeaders.AUTHORIZATION, BearerAuthenticationConverter.BEARER_PREFIX + loginResponse.accessToken())
                 .exchange()
                 .expectStatus()
                 .isOk()
@@ -80,23 +82,9 @@ class LoginAttemptControllerIT {
     void shouldReturnUnauthorized_withNoAuthorizationHeader() {
         webTestClient
                 .get().uri(LOGIN_ATTEMPTS_URL)
-//        .header("Authorization", "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJtaW5hQGdtYWlsLmNvbSIsImlhdCI6MTcwMjMwMjE0MCwiZXhwIjoxNzAyMzA1NzQwfQ.P0dlSC385lgtyRAr9Ako_hocxa2CvBV_hPAj-RjNtTw")
                 .exchange()
                 .expectStatus()
                 .isUnauthorized();
-
-//    String errorResponse = webTestClient
-//        .get().uri(LOGIN_ATTEMPTS_URL)
-////        .header("Authorization", "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJtaW5hQGdtYWlsLmNvbSIsImlhdCI6MTcwMjMwMjE0MCwiZXhwIjoxNzAyMzA1NzQwfQ.P0dlSC385lgtyRAr9Ako_hocxa2CvBV_hPAj-RjNtTw")
-//        .exchange()
-//        .expectStatus()
-//        .isForbidden()
-//        .expectBody(String.class)
-//        .returnResult()
-//        .getResponseBody();
-//
-//    assertThat(errorResponse).isNotNull();
-//    assertThat(errorResponse).isEqualTo("{\"errorCode\":401,\"description\":\"Access denied: Authorization header is required.\"}");
     }
 
     @Test
