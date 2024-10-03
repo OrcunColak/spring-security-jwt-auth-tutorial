@@ -1,19 +1,16 @@
 package com.colak.springtutorial.controller;
 
 import com.colak.springtutorial.configuration.JwtAuthFilter;
-import com.colak.springtutorial.dto.loginattempt.LoginAttemptResponseDto;
 import com.colak.springtutorial.dto.login.LoginRequestDto;
 import com.colak.springtutorial.dto.login.LoginResponseDto;
-import com.colak.springtutorial.dto.signup.SignupRequestDto;
+import com.colak.springtutorial.dto.loginattempt.LoginAttemptResponseDto;
 import com.colak.springtutorial.entity.LoginAttempt;
 import com.colak.springtutorial.helper.JwtHelper;
 import com.colak.springtutorial.service.LoginService;
-import com.colak.springtutorial.service.RegistrationService;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -34,15 +31,7 @@ import java.util.List;
 public class AuthController {
 
     private final AuthenticationManager authenticationManager;
-    private final RegistrationService registrationService;
     private final LoginService loginService;
-
-    // http://localhost:8080/api/auth/signup
-    @PostMapping("/signup")
-    public ResponseEntity<Void> signup(@Valid @RequestBody SignupRequestDto signupRequestDto) {
-        registrationService.signup(signupRequestDto);
-        return ResponseEntity.status(HttpStatus.CREATED).build();
-    }
 
     /**
      * The user does not have a Jwt Token in the request's Authorization header

@@ -1,4 +1,4 @@
-package com.colak.springtutorial.service;
+package com.colak.springtutorial.service.registration;
 
 import com.colak.springtutorial.dto.signup.SignupRequestDto;
 import com.colak.springtutorial.entity.User;
@@ -31,5 +31,4 @@ public class RegistrationService {
         User user = new User(request.name(), email, hashedPassword);
         repository.add(user);
     }
-
 }
