@@ -20,8 +20,8 @@ public class RegistrationController {
 
     // http://localhost:8080/api/auth/signup
     @PostMapping("/signup")
-    public ResponseEntity<Void> signup(@Valid @RequestBody SignupRequestDto signupRequestDto) {
-        registrationService.signup(signupRequestDto);
+    public ResponseEntity<Void> signup(@Valid @RequestBody SignupRequestDto signupRequest) {
+        registrationService.signup(signupRequest);
         return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 }

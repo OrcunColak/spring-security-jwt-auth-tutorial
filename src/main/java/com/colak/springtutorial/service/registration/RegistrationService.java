@@ -20,15 +20,15 @@ public class RegistrationService {
 
 
     @Transactional
-    public void signup(SignupRequestDto request) {
-        String email = request.email();
+    public void signup(SignupRequestDto signupRequest) {
+        String email = signupRequest.email();
         Optional<User> existingUser = repository.findByEmail(email);
         if (existingUser.isPresent()) {
             throw new DuplicateException(String.format("User with the email address '%s' already exists.", email));
         }
 
-        String hashedPassword = passwordEncoder.encode(request.password());
-        User user = new User(request.name(), email, hashedPassword);
+        String hashedPassword = passwordEncoder.encode(signupRequest.password());
+        User user = new User(signupRequest.name(), email, hashedPassword);
         repository.add(user);
     }
 }
