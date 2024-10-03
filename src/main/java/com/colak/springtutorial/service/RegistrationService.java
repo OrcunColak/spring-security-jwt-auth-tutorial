@@ -1,6 +1,6 @@
 package com.colak.springtutorial.service;
 
-import com.colak.springtutorial.dto.SignupRequestDto;
+import com.colak.springtutorial.dto.signup.SignupRequestDto;
 import com.colak.springtutorial.entity.User;
 import com.colak.springtutorial.exception.DuplicateException;
 import com.colak.springtutorial.repository.UserRepository;
@@ -13,7 +13,7 @@ import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
-public class UserService {
+public class RegistrationService {
 
     private final UserRepository repository;
     private final PasswordEncoder passwordEncoder;

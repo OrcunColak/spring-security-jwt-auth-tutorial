@@ -1,4 +1,4 @@
-package com.colak.springtutorial.dto;
+package com.colak.springtutorial.dto.signup;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;

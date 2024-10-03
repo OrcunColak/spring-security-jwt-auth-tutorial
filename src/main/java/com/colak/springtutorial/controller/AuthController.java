@@ -1,19 +1,14 @@
 package com.colak.springtutorial.controller;
 
 import com.colak.springtutorial.configuration.JwtAuthFilter;
-import com.colak.springtutorial.dto.LoginAttemptResponseDto;
-import com.colak.springtutorial.dto.LoginRequestDto;
-import com.colak.springtutorial.dto.LoginResponseDto;
-import com.colak.springtutorial.dto.SignupRequestDto;
+import com.colak.springtutorial.dto.loginattempt.LoginAttemptResponseDto;
+import com.colak.springtutorial.dto.login.LoginRequestDto;
+import com.colak.springtutorial.dto.login.LoginResponseDto;
+import com.colak.springtutorial.dto.signup.SignupRequestDto;
 import com.colak.springtutorial.entity.LoginAttempt;
 import com.colak.springtutorial.helper.JwtHelper;
 import com.colak.springtutorial.service.LoginService;
-import com.colak.springtutorial.service.UserService;
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.media.Content;
-import io.swagger.v3.oas.annotations.media.Schema;
-import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import com.colak.springtutorial.service.RegistrationService;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -39,13 +34,13 @@ import java.util.List;
 public class AuthController {
 
     private final AuthenticationManager authenticationManager;
-    private final UserService userService;
+    private final RegistrationService registrationService;
     private final LoginService loginService;
 
     // http://localhost:8080/api/auth/signup
     @PostMapping("/signup")
     public ResponseEntity<Void> signup(@Valid @RequestBody SignupRequestDto signupRequestDto) {
-        userService.signup(signupRequestDto);
+        registrationService.signup(signupRequestDto);
         return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 
@@ -93,16 +88,6 @@ public class AuthController {
         String email = JwtHelper.extractUsername(token.replace("Bearer ", ""));
         List<LoginAttempt> loginAttempts = loginService.findRecentLoginAttempts(email);
         return ResponseEntity.ok(convertToDTOs(loginAttempts));
-    }
-
-    @Operation(summary = "Get quote if logged in")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Logged in successfully.", content = @Content(schema = @Schema(implementation = String.class))),
-            @ApiResponse(responseCode = "403", description = "Not Logged in successfully.", content = @Content(schema = @Schema(implementation = String.class)))
-    })
-    @GetMapping(value = "/quote")
-    public String quote() {
-        return "quote";
     }
 
     private List<LoginAttemptResponseDto> convertToDTOs(List<LoginAttempt> loginAttempts) {

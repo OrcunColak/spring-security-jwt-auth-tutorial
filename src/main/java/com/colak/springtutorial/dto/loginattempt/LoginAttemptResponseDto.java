@@ -1,4 +1,4 @@
-package com.colak.springtutorial.dto;
+package com.colak.springtutorial.dto.loginattempt;
 
 import com.colak.springtutorial.entity.LoginAttempt;
 

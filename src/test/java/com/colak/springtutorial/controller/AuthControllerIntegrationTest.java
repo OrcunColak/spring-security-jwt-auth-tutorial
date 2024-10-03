@@ -1,8 +1,8 @@
 package com.colak.springtutorial.controller;
 
 import com.colak.springtutorial.dto.ApiErrorResponseDto;
-import com.colak.springtutorial.dto.LoginAttemptResponseDto;
-import com.colak.springtutorial.dto.LoginResponseDto;
+import com.colak.springtutorial.dto.loginattempt.LoginAttemptResponseDto;
+import com.colak.springtutorial.dto.login.LoginResponseDto;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.reactive.AutoConfigureWebTestClient;

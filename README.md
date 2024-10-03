@@ -3,6 +3,9 @@
 The original idea is from  
 https://medium.com/@minadev/authentication-and-authorization-with-spring-security-bf22e985f2cb
 
+This project uses JDBC for repositories. If we warn to use JPA another example is here  
+https://medium.com/@saifmohamed1996/implementing-jwt-based-authentication-in-spring-boot-af39b8d8b50c
+
 # JWT With Cookie
 
 The original idea is from  

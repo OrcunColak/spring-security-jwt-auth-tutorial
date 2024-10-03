@@ -10,6 +10,7 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.http.HttpHeaders;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -34,46 +35,46 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 
 
     @Override
-    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
+    protected void doFilterInternal(HttpServletRequest httpServletRequest, HttpServletResponse httpServletResponse, FilterChain filterChain)
             throws ServletException, IOException {
         try {
-            String token = getTokenFromHeader(request);
+            String token = getTokenFromRequestHeader(httpServletRequest);
             if (token == null) {
-                token = getTokenFromCookie(request);
+                token = getTokenFromCookie(httpServletRequest);
             }
 
             // If the accessToken is null. It will pass the request to next filter in the chain.
             // Any login and signup requests that does not have jwt token will be passed to next filter chain.
             if (token == null) {
-                filterChain.doFilter(request, response);
+                filterChain.doFilter(httpServletRequest, httpServletResponse);
                 return;
             }
 
             String username = JwtHelper.extractUsername(token);
 
-            validateTokenAndUser(request, username, token);
+            validateTokenAndUser(httpServletRequest, username, token);
 
-            filterChain.doFilter(request, response);
+            filterChain.doFilter(httpServletRequest, httpServletResponse);
         } catch (AccessDeniedException e) {
             ApiErrorResponseDto errorResponse = new ApiErrorResponseDto(HttpServletResponse.SC_FORBIDDEN, e.getMessage());
-            response.setStatus(HttpServletResponse.SC_FORBIDDEN);
-            response.getWriter().write(toJson(errorResponse));
+            httpServletResponse.setStatus(HttpServletResponse.SC_FORBIDDEN);
+            httpServletResponse.getWriter().write(toJson(errorResponse));
         }
     }
 
-    private String getTokenFromHeader(HttpServletRequest request) {
+    private String getTokenFromRequestHeader(HttpServletRequest httpServletRequest) {
         String token = null;
-        String authHeader = request.getHeader("Authorization");
+        String authHeader = httpServletRequest.getHeader(HttpHeaders.AUTHORIZATION);
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
             token = authHeader.substring(7);
         }
         return token;
     }
 
-    private String getTokenFromCookie(HttpServletRequest request) {
+    private String getTokenFromCookie(HttpServletRequest httpServletRequest) {
         String token = null;
-        if (request.getCookies() != null) {
-            for (Cookie cookie : request.getCookies()) {
+        if (httpServletRequest.getCookies() != null) {
+            for (Cookie cookie : httpServletRequest.getCookies()) {
                 if (cookie.getName().equals(COOKIE_NAME)) {
                     token = cookie.getValue();
                     break;
@@ -91,8 +92,9 @@ public class JwtAuthFilter extends OncePerRequestFilter {
             if (JwtHelper.validateToken(token, userDetails)) {
 
                 // Create a token and set to SecurityContext, so that we can be sure that user is authenticated
-                UsernamePasswordAuthenticationToken authenticationToken =
-                        new UsernamePasswordAuthenticationToken(userDetails, null, null);
+                UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(userDetails,
+                        userDetails.getPassword(), userDetails.getAuthorities());
+
                 authenticationToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                 securityContext.setAuthentication(authenticationToken);
             }

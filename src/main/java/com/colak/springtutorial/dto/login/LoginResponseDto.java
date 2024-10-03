@@ -1,4 +1,4 @@
-package com.colak.springtutorial.dto;
+package com.colak.springtutorial.dto.login;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 
