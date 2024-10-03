@@ -23,7 +23,7 @@ public class SecurityConfig {
 
     private final UserDetailsServiceImpl userDetailsService;
     private final JwtAuthFilter jwtAuthFilter;
-    private final AuthEntryPointJwt unauthorizedHandler;
+    private final UnauthorizedHandler unauthorizedHandler;
 
     @Bean
     public PasswordEncoder passwordEncoder() {

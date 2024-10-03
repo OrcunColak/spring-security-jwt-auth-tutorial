@@ -18,7 +18,7 @@ import java.io.OutputStream;
 @Component
 @Slf4j
 @RequiredArgsConstructor
-public class AuthEntryPointJwt implements AuthenticationEntryPoint {
+public class UnauthorizedHandler implements AuthenticationEntryPoint {
 
     private final ObjectMapper objectMapper;
 
