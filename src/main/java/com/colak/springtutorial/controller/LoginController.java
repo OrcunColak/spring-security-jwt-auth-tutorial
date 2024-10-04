@@ -2,14 +2,14 @@ package com.colak.springtutorial.controller;
 
 import com.colak.springtutorial.dto.login.LoginRequestDto;
 import com.colak.springtutorial.dto.login.LoginResponseDto;
-import com.colak.springtutorial.helper.JwtHelper;
-import com.colak.springtutorial.service.LoginService;
+import com.colak.springtutorial.service.accesstoken.AccessTokenService;
+import com.colak.springtutorial.service.loginattempt.LoginAttemptService;
+import com.colak.springtutorial.service.refreshtokenservice.RefreshTokenService;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseCookie;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -26,7 +26,9 @@ import static com.colak.springtutorial.configuration.BearerAuthenticationConvert
 public class LoginController {
 
     private final AuthenticationManager authenticationManager;
-    private final LoginService loginService;
+    private final LoginAttemptService loginAttemptService;
+    private final AccessTokenService accessTokenService;
+    private final RefreshTokenService refreshTokenService;
 
     /**
      * The user does not have a Jwt Token in the request's Authorization header
@@ -34,15 +36,18 @@ public class LoginController {
      */
     // http://localhost:8080/api/auth/login
     @PostMapping(value = "/login")
-    public ResponseEntity<LoginResponseDto> login(@Valid @RequestBody LoginRequestDto request,
+    public LoginResponseDto login(@Valid @RequestBody LoginRequestDto request,
                                                   HttpServletResponse response) {
+        String email = request.email();
         try {
             // First authenticate the user
-            authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(request.email(), request.password()));
+            authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(email, request.password()));
 
             // Generate a new Jwt token
-            String accessToken = JwtHelper.generateToken(request.email());
-            loginService.addLoginAttempt(request.email(), true);
+            String accessToken = accessTokenService.generateAccessToken(email);
+            String refreshToken = refreshTokenService.createRefreshToken(email);
+
+            loginAttemptService.addLoginAttempt(email, true);
 
             // Add the token to ResponseCookie
             // set cookie expiry for 30 minutes
@@ -56,11 +61,9 @@ public class LoginController {
                     .build();
             response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
 
-            LoginResponseDto body = new LoginResponseDto(request.email(), accessToken);
-            return ResponseEntity.ok(body);
-
+            return new LoginResponseDto(email, accessToken, refreshToken);
         } catch (BadCredentialsException exception) {
-            loginService.addLoginAttempt(request.email(), false);
+            loginAttemptService.addLoginAttempt(email, false);
             throw exception;
         }
     }

@@ -17,14 +17,9 @@ import java.util.Date;
 public class JwtHelper {
 
     private static final SecretKey SECRET_KEY = Jwts.SIG.HS256.key().build();
-    private static final int MINUTES = 60;
+    private static final int MINUTES = 15;
 
-    /**
-     *  This method is used to generate a JWT token.
-     *  It takes an input, creates a set of claims (e.g., subject, issued-at, expiration), and then builds a JWT
-     *  token using the claims and the signing key. The resulting token is returned.
-     */
-    public static String generateToken(String email) {
+    public static String generateAccessToken(String email) {
         var now = Instant.now();
         return Jwts.builder()
                 .subject(email)

@@ -26,3 +26,12 @@ CREATE TABLE login_attempts (
     created_at TIMESTAMP NOT NULL
 );
 
+CREATE TABLE refresh_tokens (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    token VARCHAR(255),
+    expiry_date TIMESTAMP,
+    user_id BIGINT,
+    CONSTRAINT fk_user FOREIGN KEY (user_id) REFERENCES users(id)
+);
+
+

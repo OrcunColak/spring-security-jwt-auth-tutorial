@@ -18,17 +18,17 @@ import java.util.List;
 public class RestExceptionHandler {
 
     @ExceptionHandler(NotFoundException.class)
-    public ResponseEntity<ApiErrorResponseDto> handleNotFoundException(NotFoundException e) {
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ApiErrorResponseDto(HttpStatus.NOT_FOUND.value(), e.getMessage()));
+    public ResponseEntity<ApiErrorResponseDto> handleNotFoundException(NotFoundException exception) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ApiErrorResponseDto(HttpStatus.NOT_FOUND.value(), exception.getMessage()));
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<ApiErrorResponseDto> handleRequestNotValidException(MethodArgumentNotValidException e) {
+    public ResponseEntity<ApiErrorResponseDto> handleRequestNotValidException(MethodArgumentNotValidException exception) {
 
         List<String> errors = new ArrayList<>();
-        e.getBindingResult()
+        exception.getBindingResult()
                 .getFieldErrors().forEach(error -> errors.add(error.getField() + ": " + error.getDefaultMessage()));
-        e.getBindingResult()
+        exception.getBindingResult()
                 .getGlobalErrors() //Global errors are not associated with a specific field but are related to the entire object being validated.
                 .forEach(error -> errors.add(error.getObjectName() + ": " + error.getDefaultMessage()));
 

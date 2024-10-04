@@ -49,12 +49,9 @@ public class SecurityConfig {
                         // Permit access to our public endpoints
                         .requestMatchers(HttpMethod.POST, "/api/auth/signup/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/auth/login/**").permitAll()
-                        // Permit access to swagger
-                        .requestMatchers(HttpMethod.GET, "/authentication-docs/**").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/auth/refreshToken/**").permitAll()
                         // Our private endpoints
                         .anyRequest().authenticated())
-                // Provide custom authentication manager
-                // .authenticationManager(authenticationManager)
 
                 // We need jwt filter before the UsernamePasswordAuthenticationFilter.
                 // Since we need every request to be authenticated before going through spring security filter.

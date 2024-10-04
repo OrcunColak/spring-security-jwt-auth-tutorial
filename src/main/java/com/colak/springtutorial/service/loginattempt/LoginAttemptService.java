@@ -1,4 +1,4 @@
-package com.colak.springtutorial.service;
+package com.colak.springtutorial.service.loginattempt;
 
 import com.colak.springtutorial.jpa.LoginAttempt;
 import com.colak.springtutorial.repository.LoginAttemptRepository;
@@ -11,7 +11,7 @@ import java.util.List;
 
 @Service
 @RequiredArgsConstructor
-public class LoginService {
+public class LoginAttemptService {
 
     private final LoginAttemptRepository repository;
 

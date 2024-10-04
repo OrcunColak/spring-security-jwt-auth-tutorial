@@ -4,7 +4,7 @@ import com.colak.springtutorial.configuration.BearerAuthenticationConverter;
 import com.colak.springtutorial.dto.loginattempt.LoginAttemptResponseDto;
 import com.colak.springtutorial.helper.JwtHelper;
 import com.colak.springtutorial.jpa.LoginAttempt;
-import com.colak.springtutorial.service.LoginService;
+import com.colak.springtutorial.service.loginattempt.LoginAttemptService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
@@ -20,13 +20,13 @@ import java.util.List;
 @RequiredArgsConstructor
 public class LoginAttemptController {
 
-    private final LoginService loginService;
+    private final LoginAttemptService loginAttemptService;
 
     // http://localhost:8080/api/auth/loginAttempts
     @GetMapping(value = "/loginAttempts")
     public ResponseEntity<List<LoginAttemptResponseDto>> loginAttempts(@RequestHeader(HttpHeaders.AUTHORIZATION) String token) {
         String email = JwtHelper.extractUsername(token.replace(BearerAuthenticationConverter.BEARER_PREFIX, ""));
-        List<LoginAttempt> loginAttempts = loginService.findRecentLoginAttempts(email);
+        List<LoginAttempt> loginAttempts = loginAttemptService.findRecentLoginAttempts(email);
         return ResponseEntity.ok(convertToDTOs(loginAttempts));
     }
 
