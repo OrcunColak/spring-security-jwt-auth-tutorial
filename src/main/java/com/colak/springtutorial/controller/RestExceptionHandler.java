@@ -1,16 +1,16 @@
 package com.colak.springtutorial.controller;
 
-import com.colak.springtutorial.dto.ApiErrorResponseDto;
 import com.colak.springtutorial.exception.DuplicateException;
 import com.colak.springtutorial.exception.NotFoundException;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.ProblemDetail;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.InternalAuthenticationServiceException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -18,43 +18,53 @@ import java.util.List;
 public class RestExceptionHandler {
 
     @ExceptionHandler(NotFoundException.class)
-    public ResponseEntity<ApiErrorResponseDto> handleNotFoundException(NotFoundException exception) {
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ApiErrorResponseDto(HttpStatus.NOT_FOUND.value(), exception.getMessage()));
+    public ProblemDetail handleNotFoundException(NotFoundException exception) {
+        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, exception.getMessage());
+        problemDetail.setTitle("Resource Not Found");
+        return problemDetail;
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<ApiErrorResponseDto> handleRequestNotValidException(MethodArgumentNotValidException exception) {
-
+    public ProblemDetail handleRequestNotValidException(MethodArgumentNotValidException exception) {
         List<String> errors = new ArrayList<>();
         exception.getBindingResult()
                 .getFieldErrors().forEach(error -> errors.add(error.getField() + ": " + error.getDefaultMessage()));
         exception.getBindingResult()
-                .getGlobalErrors() //Global errors are not associated with a specific field but are related to the entire object being validated.
+                .getGlobalErrors()
                 .forEach(error -> errors.add(error.getObjectName() + ": " + error.getDefaultMessage()));
 
         String message = "Validation of request failed: %s".formatted(String.join(", ", errors));
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ApiErrorResponseDto(HttpStatus.BAD_REQUEST.value(), message));
+        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, message);
+        problemDetail.setType(URI.create("https://example.com/validation-error")); // Example URI
+        problemDetail.setTitle("Validation Error");
+        return problemDetail;
     }
 
     @ExceptionHandler(BadCredentialsException.class)
-    public ResponseEntity<ApiErrorResponseDto> handleBadCredentialsException() {
-        return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                .body(new ApiErrorResponseDto(HttpStatus.UNAUTHORIZED.value(), "Invalid username or password"));
+    public ProblemDetail handleBadCredentialsException(BadCredentialsException exception) {
+        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.UNAUTHORIZED, exception.getMessage());
+        problemDetail.setTitle("Bad Credentials");
+        return problemDetail;
     }
 
     @ExceptionHandler(DuplicateException.class)
-    public ResponseEntity<ApiErrorResponseDto> handleDuplicateException(DuplicateException e) {
-        return ResponseEntity.status(HttpStatus.CONFLICT).body(new ApiErrorResponseDto(HttpStatus.CONFLICT.value(), e.getMessage()));
+    public ProblemDetail handleDuplicateException(DuplicateException exception) {
+        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, exception.getMessage());
+        problemDetail.setTitle("Duplicate Resource");
+        return problemDetail;
     }
 
     @ExceptionHandler(InternalAuthenticationServiceException.class)
-    public ResponseEntity<ApiErrorResponseDto> handleInternalAuthenticationServiceException(InternalAuthenticationServiceException e) {
-        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new ApiErrorResponseDto(HttpStatus.UNAUTHORIZED.value(), e.getMessage()));
+    public ProblemDetail handleInternalAuthenticationServiceException(InternalAuthenticationServiceException exception) {
+        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.UNAUTHORIZED, exception.getMessage());
+        problemDetail.setTitle("Internal Authentication Error");
+        return problemDetail;
     }
 
     @ExceptionHandler(Exception.class)
-    public ResponseEntity<ApiErrorResponseDto> handleUnknownException(Exception e) {
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new ApiErrorResponseDto(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()));
+    public ProblemDetail handleUnknownException(Exception exception) {
+        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.INTERNAL_SERVER_ERROR, exception.getMessage());
+        problemDetail.setTitle("Internal Server Error");
+        return problemDetail;
     }
-
 }

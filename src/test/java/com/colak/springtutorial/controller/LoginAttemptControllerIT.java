@@ -1,6 +1,7 @@
 package com.colak.springtutorial.controller;
 
 import com.colak.springtutorial.configuration.BearerAuthenticationConverter;
+import com.colak.springtutorial.dto.ApiErrorResponseDto;
 import com.colak.springtutorial.dto.login.LoginRequestDto;
 import com.colak.springtutorial.dto.login.LoginResponseDto;
 import com.colak.springtutorial.dto.loginattempt.LoginAttemptResponseDto;
@@ -10,6 +11,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.reactive.AutoConfigureWebTestClient;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.reactive.server.WebTestClient;
 
@@ -92,17 +94,18 @@ class LoginAttemptControllerIT {
         // Send empty Authorization
         // isUnauthorized : client making the request lacks valid authentication credentials
         // isForbidden : client has authenticated itself, but it does not have the necessary permissions
-        String errorResponse = webTestClient
+        ApiErrorResponseDto errorResponse = webTestClient
                 .get().uri(LOGIN_ATTEMPTS_URL)
                 .header("Authorization", " ")
                 .exchange()
                 .expectStatus()
                 .isUnauthorized()
-                .expectBody(String.class)
+                .expectBody(ApiErrorResponseDto.class)
                 .returnResult()
                 .getResponseBody();
 
         assertThat(errorResponse).isNotNull();
-        assertThat(errorResponse).isEqualTo("{\"errorCode\":401,\"description\":\"Access denied: Authorization header is required.\"}");
+        assertThat(errorResponse.errorCode()).isEqualTo(HttpStatus.UNAUTHORIZED.value());
+        assertThat(errorResponse.description()).isEqualTo("Access denied: Authorization header is required.");
     }
 }

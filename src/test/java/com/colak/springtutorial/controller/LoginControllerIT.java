@@ -1,6 +1,5 @@
 package com.colak.springtutorial.controller;
 
-import com.colak.springtutorial.dto.ApiErrorResponseDto;
 import com.colak.springtutorial.dto.login.LoginRequestDto;
 import com.colak.springtutorial.dto.login.LoginResponseDto;
 import com.colak.springtutorial.dto.signup.SignupRequestDto;
@@ -10,6 +9,7 @@ import org.springframework.boot.test.autoconfigure.web.reactive.AutoConfigureWeb
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.http.ProblemDetail;
 import org.springframework.test.web.reactive.server.WebTestClient;
 
 import java.util.ArrayList;
@@ -80,39 +80,39 @@ class LoginControllerIT {
         // Password is different
         LoginRequestDto loginRequestWithWrongPassword = new LoginRequestDto("john@gmail.com","12345678910");
 
-        ApiErrorResponseDto errorResponse = webTestClient
+        ProblemDetail errorResponse = webTestClient
                 .post().uri(LOGIN_URL)
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(loginRequestWithWrongPassword)
                 .exchange()
                 .expectStatus()
                 .isUnauthorized()
-                .expectBody(ApiErrorResponseDto.class)
+                .expectBody(ProblemDetail.class)
                 .returnResult()
                 .getResponseBody();
 
         assertThat(errorResponse).isNotNull();
-        assertThat(errorResponse.errorCode()).isEqualTo(HttpStatus.UNAUTHORIZED.value());
-        assertThat(errorResponse.description()).isEqualTo("Invalid username or password");
+        assertThat(errorResponse.getStatus()).isEqualTo(HttpStatus.UNAUTHORIZED.value());
+        assertThat(errorResponse.getDetail()).isEqualTo("Bad credentials");
     }
 
     @Test
     void shouldReturnUnauthorized_WhenUserNotRegistered() {
         LoginRequestDto loginRequestForRegisteredUser = new LoginRequestDto("sara@gmail.com","123456");
 
-        ApiErrorResponseDto errorResponse = webTestClient
+        ProblemDetail errorResponse = webTestClient
                 .post().uri(LOGIN_URL)
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(loginRequestForRegisteredUser)
                 .exchange()
                 .expectStatus()
                 .isUnauthorized()
-                .expectBody(ApiErrorResponseDto.class)
+                .expectBody(ProblemDetail.class)
                 .returnResult()
                 .getResponseBody();
 
         assertThat(errorResponse).isNotNull();
-        assertThat(errorResponse.errorCode()).isEqualTo(HttpStatus.UNAUTHORIZED.value());
-        assertThat(errorResponse.description()).isEqualTo("User does not exist, email: sara@gmail.com");
+        assertThat(errorResponse.getStatus()).isEqualTo(HttpStatus.UNAUTHORIZED.value());
+        assertThat(errorResponse.getDetail()).isEqualTo("User does not exist, email: sara@gmail.com");
     }
 }
